@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Spotify Promo Workflow — Harmony Hype Verdict</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #0b0e1a; font-family: 'DM Sans', system-ui, sans-serif; color: #e8e8f0; }
+  input, select, textarea, button { font-family: inherit; }
+  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #0f1220; } ::-webkit-scrollbar-thumb { background: #1e3a4a; border-radius: 3px; }
+  select option { background: #111827; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+const GENRES = [
+  "Indian Indie", "Bollywood", "Folk", "Folk/Acoustic", "Blues", "Blues Rock",
+  "Rock", "Alt Rock", "Progressive Rock", "Hard Rock", "Punk Rock", "Indie Rock",
+  "Electronic", "Hip-Hop/Rap", "Jazz/Neo-Soul", "Pop", "Metal", "R&B/Soul",
+  "Country", "Classical", "Ambient", "Reggae", "Funk", "Devotional/Spiritual"
+];
+const STAGES = ["Not Started", "Drafted", "Sent", "Followed Up", "Got Response", "Placed"];
+const STAGE_COLORS = {
+  "Not Started": "#4a4a5a", "Drafted": "#7c6bc9", "Sent": "#2b8fa3",
+  "Followed Up": "#d4a030", "Got Response": "#3aa86b", "Placed": "#e05c8a",
+};
+
+const HHV_ENTRY = { name: "Harmony Hype Verdict", platform: "Blog + Instagram", followers: "Growing", contact: "harmonyhypeverdict@gmail.com", type: "Blog", hhv: true };
+
+const CURATOR_DB_RAW = {
+  "Indian Indie": [
+    { name: "Wild City", platform: "Blog + Playlist", followers: "80K+", contact: "music@thewildcity.com", type: "Blog" },
+    { name: "Homegrown", platform: "Blog + Playlist", followers: "150K+", contact: "submissions@homegrown.co.in", type: "Blog" },
+    { name: "Bandish India", platform: "Spotify Playlist", followers: "8K", contact: "bandishindia.music@gmail.com", type: "Playlist" },
+    { name: "Boxout.fm", platform: "Radio + Podcast", followers: "20K+", contact: "hello@boxout.fm", type: "Radio" },
+    { name: "Roli Magazine", platform: "Online Magazine", followers: "30K+", contact: "hello@rolimag.com", type: "Magazine" },
+    { name: "Rolling Stone India", platform: "Magazine + Blog", followers: "500K+", contact: "editorial@rollingstoneindia.com", type: "Magazine" },
+    { name: "Mixmag India", platform: "Magazine", followers: "40K+", contact: "india@mixmag.net", type: "Magazine" },
+    { name: "Radio Mirchi (Indie Shows)", platform: "Radio", followers: "10M+", contact: "programming@radiomirchi.com", type: "Radio" },
+    { name: "NH7 / OML", platform: "Blog + Events", followers: "200K+", contact: "artists@oml.in", type: "Blog" },
+    { name: "Feels Like Home Playlist", platform: "Spotify Playlist", followers: "18K", contact: "feelshomemusic@gmail.com", type: "Playlist" },
+  ],
+  "Bollywood": [
+    { name: "Filmfare Music", platform: "Magazine + Online", followers: "1M+", contact: "music@filmfare.com", type: "Magazine" },
+    { name: "Bollywood Hungama", platform: "Portal + Reviews", followers: "2M+", contact: "music@bollywoodhungama.com", type: "Blog" },
+    { name: "Gaana Originals", platform: "Streaming + Blog", followers: "5M+", contact: "originals@gaana.com", type: "Platform" },
+    { name: "Radio City Bollywood", platform: "Radio", followers: "8M+", contact: "programming@radiocity.in", type: "Radio" },
+    { name: "Saregama Blog", platform: "Blog", followers: "100K+", contact: "content@saregama.com", type: "Blog" },
+    { name: "Mirchi Top 20", platform: "Radio Chart Show", followers: "15M+", contact: "charts@radiomirchi.com", type: "Radio" },
+    { name: "Spotify Bollywood Beats", platform: "Spotify Editorial", followers: "800K+", contact: "editorial@spotify.com", type: "Editorial" },
+    { name: "Hungama Music Blog", platform: "Blog", followers: "500K+", contact: "blog@hungama.com", type: "Blog" },
+  ],
+  "Folk": [
+    { name: "Folk Radio UK", platform: "Radio + Blog", followers: "25K+", contact: "music@folkradio.co.uk", type: "Radio" },
+    { name: "No Depression", platform: "Magazine + Blog", followers: "60K+", contact: "submissions@nodepression.com", type: "Magazine" },
+    { name: "Folk Alley", platform: "Radio + Playlist", followers: "40K+", contact: "music@folkall.org", type: "Radio" },
+    { name: "Living Tradition Magazine", platform: "Magazine", followers: "15K+", contact: "editor@livingtradition.co.uk", type: "Magazine" },
+    { name: "Songlines Magazine", platform: "Magazine + Radio", followers: "35K+", contact: "reviews@songlines.co.uk", type: "Magazine" },
+    { name: "Fatea Magazine", platform: "Online Magazine", followers: "20K+", contact: "reviews@fatea-records.co.uk", type: "Magazine" },
+    { name: "Indie Folk Vibes", platform: "Spotify Playlist", followers: "45K", contact: "indifolkvibes@gmail.com", type: "Playlist" },
+    { name: "Roots Music Report", platform: "Blog + Chart", followers: "30K+", contact: "info@rootsmusicreport.com", type: "Blog" },
+  ],
+  "Folk/Acoustic": [
+    { name: "Acoustic Sunrise", platform: "Spotify Playlist", followers: "30K", contact: "acousticsunrise@gmail.com", type: "Playlist" },
+    { name: "Folk Radio UK", platform: "Radio + Blog", followers: "25K+", contact: "music@folkradio.co.uk", type: "Radio" },
+    { name: "No Depression", platform: "Magazine + Blog", followers: "60K+", contact: "submissions@nodepression.com", type: "Magazine" },
+    { name: "Acoustic Guitar Magazine", platform: "Magazine", followers: "80K+", contact: "editor@acousticguitar.com", type: "Magazine" },
+    { name: "Sofar Sounds", platform: "Events + Blog", followers: "500K+", contact: "artists@sofarsounds.com", type: "Blog" },
+    { name: "Unplugged Sessions Playlist", platform: "Spotify Playlist", followers: "22K", contact: "unpluggedsessions@gmail.com", type: "Playlist" },
+    { name: "Paste Magazine", platform: "Magazine + Blog", followers: "200K+", contact: "music@pastemagazine.com", type: "Magazine" },
+    { name: "American Songwriter", platform: "Magazine + Blog", followers: "150K+", contact: "submissions@americansongwriter.com", type: "Magazine" },
+  ],
+  "Blues": [
+    { name: "Blues Matters Magazine", platform: "Magazine", followers: "20K+", contact: "editor@bluesmatters.com", type: "Magazine" },
+    { name: "Blues Music Magazine", platform: "Magazine", followers: "25K+", contact: "info@bluesmusicmagazine.com", type: "Magazine" },
+    { name: "Living Blues", platform: "Magazine", followers: "18K+", contact: "editor@livingblues.com", type: "Magazine" },
+    { name: "Blues Blast Magazine", platform: "Online Magazine", followers: "30K+", contact: "editor@bluesblastmagazine.com", type: "Magazine" },
+    { name: "The Blues Foundation", platform: "Blog + Radio", followers: "50K+", contact: "info@blues.org", type: "Blog" },
+    { name: "KBCA Blues Radio", platform: "Radio", followers: "15K+", contact: "programming@kbca.org", type: "Radio" },
+    { name: "House of Blues Radio Hour", platform: "Radio Syndication", followers: "100K+", contact: "houseofblues@radio.com", type: "Radio" },
+    { name: "Spotify Blues Classics", platform: "Spotify Editorial", followers: "200K+", contact: "editorial@spotify.com", type: "Editorial" },
+    { name: "Deep Blues Playlist", platform: "Spotify Playlist", followers: "28K", contact: "deepblues.curator@gmail.com", type: "Playlist" },
+  ],
+  "Blues Rock": [
+    { name: "Blues Rock Review", platform: "Blog + Reviews", followers: "35K+", contact: "reviews@bluesrockreview.com", type: "Blog" },
+    { name: "Guitar World", platform: "Magazine + Blog", followers: "500K+", contact: "submissions@guitarworld.com", type: "Magazine" },
+    { name: "Classic Rock Magazine", platform: "Magazine", followers: "300K+", contact: "classicrock@futurenet.com", type: "Magazine" },
+    { name: "Powerplay Magazine", platform: "Magazine", followers: "25K+", contact: "info@powerplaymagazine.co.uk", type: "Magazine" },
+    { name: "Blues Rock Highway", platform: "Spotify Playlist", followers: "40K", contact: "bluesrockhighway@gmail.com", type: "Playlist" },
+    { name: "Rock Antenne", platform: "Radio", followers: "2M+", contact: "music@rockantenne.de", type: "Radio" },
+    { name: "Planet Rock Radio", platform: "Radio", followers: "1M+", contact: "programming@planetrock.com", type: "Radio" },
+    { name: "Vintage Rock Magazine", platform: "Magazine", followers: "40K+", contact: "editor@vintagerock.com", type: "Magazine" },
+  ],
+  "Rock": [
+    { name: "Rolling Stone", platform: "Magazine + Blog", followers: "10M+", contact: "music@rollingstone.com", type: "Magazine" },
+    { name: "NME", platform: "Magazine + Blog", followers: "5M+", contact: "music@nme.com", type: "Magazine" },
+    { name: "Kerrang!", platform: "Magazine", followers: "2M+", contact: "news@kerrang.com", type: "Magazine" },
+    { name: "Rock Sound", platform: "Magazine", followers: "500K+", contact: "music@rocksound.tv", type: "Magazine" },
+    { name: "Consequence of Sound", platform: "Blog", followers: "1M+", contact: "submissions@consequenceofsound.net", type: "Blog" },
+    { name: "Planet Rock Radio", platform: "Radio", followers: "1M+", contact: "programming@planetrock.com", type: "Radio" },
+    { name: "Rock FM", platform: "Radio", followers: "3M+", contact: "music@rockfm.pl", type: "Radio" },
+    { name: "Loudwire", platform: "Blog", followers: "2M+", contact: "tips@loudwire.com", type: "Blog" },
+    { name: "The Rock Pit", platform: "Blog", followers: "80K+", contact: "editor@therockpit.net", type: "Blog" },
+    { name: "New Rock Releases Playlist", platform: "Spotify Playlist", followers: "90K", contact: "newrockreleases@gmail.com", type: "Playlist" },
+  ],
+  "Alt Rock": [
+    { name: "Indie Shuffle", platform: "Blog + Playlist", followers: "150K+", contact: "submit@indieshuffle.com", type: "Blog" },
+    { name: "The Line of Best Fit", platform: "Blog", followers: "120K+", contact: "music@thelineofbestfit.com", type: "Blog" },
+    { name: "Pitchfork", platform: "Magazine + Blog", followers: "2M+", contact: "pitchfork.com/reviews/submit", type: "Blog" },
+    { name: "DIY Magazine", platform: "Magazine + Blog", followers: "200K+", contact: "hello@diymag.com", type: "Magazine" },
+    { name: "Clash Magazine", platform: "Magazine", followers: "300K+", contact: "music@clashmusic.com", type: "Magazine" },
+    { name: "Stereogum", platform: "Blog", followers: "500K+", contact: "tips@stereogum.com", type: "Blog" },
+    { name: "Alternative Press", platform: "Magazine", followers: "1M+", contact: "altpress@altpress.com", type: "Magazine" },
+    { name: "XFM / Radio X", platform: "Radio", followers: "1.5M+", contact: "music@radiox.co.uk", type: "Radio" },
+    { name: "KEXP 90.3 FM", platform: "Radio", followers: "500K+", contact: "music@kexp.org", type: "Radio" },
+    { name: "Alt Nation (SiriusXM)", platform: "Radio", followers: "2M+", contact: "altnation@siriusxm.com", type: "Radio" },
+  ],
+  "Progressive Rock": [
+    { name: "Prog Magazine", platform: "Magazine", followers: "50K+", contact: "prog@futurenet.com", type: "Magazine" },
+    { name: "Sea of Tranquility", platform: "Blog + Reviews", followers: "30K+", contact: "editor@seaoftranquility.org", type: "Blog" },
+    { name: "Progressive Music Planet", platform: "Blog", followers: "25K+", contact: "info@progressivemusicplanet.com", type: "Blog" },
+    { name: "Prog Sphere", platform: "Blog + Reviews", followers: "20K+", contact: "contact@prog-sphere.com", type: "Blog" },
+    { name: "Aural Moon Radio", platform: "Radio", followers: "15K+", contact: "dj@auralmoon.com", type: "Radio" },
+    { name: "House of Prog", platform: "Blog", followers: "18K+", contact: "info@houseofprog.com", type: "Blog" },
+    { name: "Progulus Radio", platform: "Radio", followers: "20K+", contact: "music@progulus.com", type: "Radio" },
+    { name: "Spotify Prog Odyssey", platform: "Spotify Playlist", followers: "35K", contact: "progodyssey@gmail.com", type: "Playlist" },
+    { name: "Ultimate Progressive", platform: "Spotify Playlist", followers: "22K", contact: "ultimateprog@gmail.com", type: "Playlist" },
+  ],
+  "Hard Rock": [
+    { name: "Kerrang!", platform: "Magazine", followers: "2M+", contact: "news@kerrang.com", type: "Magazine" },
+    { name: "Classic Rock Magazine", platform: "Magazine", followers: "300K+", contact: "classicrock@futurenet.com", type: "Magazine" },
+    { name: "Loudwire", platform: "Blog", followers: "2M+", contact: "tips@loudwire.com", type: "Blog" },
+    { name: "Hard Rock Hell Radio", platform: "Radio", followers: "30K+", contact: "music@hardrockhellradio.co.uk", type: "Radio" },
+    { name: "Planet Rock Radio", platform: "Radio", followers: "1M+", contact: "programming@planetrock.com", type: "Radio" },
+    { name: "Powerplay Magazine", platform: "Magazine", followers: "25K+", contact: "info@powerplaymagazine.co.uk", type: "Magazine" },
+    { name: "Metal Hammer", platform: "Magazine", followers: "400K+", contact: "metalhammer@futurenet.com", type: "Magazine" },
+    { name: "Hard Rock Playlist", platform: "Spotify Playlist", followers: "75K", contact: "hardrockcurator@gmail.com", type: "Playlist" },
+  ],
+  "Punk Rock": [
+    { name: "Punknews.org", platform: "Blog", followers: "200K+", contact: "news@punknews.org", type: "Blog" },
+    { name: "Alternative Press", platform: "Magazine", followers: "1M+", contact: "altpress@altpress.com", type: "Magazine" },
+    { name: "Rock Sound", platform: "Magazine", followers: "500K+", contact: "music@rocksound.tv", type: "Magazine" },
+    { name: "Maximum Rocknroll", platform: "Zine + Blog", followers: "40K+", contact: "mrr@maximumrocknroll.com", type: "Magazine" },
+    { name: "Razorcake", platform: "Zine + Podcast", followers: "25K+", contact: "info@razorcake.org", type: "Magazine" },
+    { name: "Absolutepunk", platform: "Blog", followers: "150K+", contact: "contact@chorus.fm", type: "Blog" },
+    { name: "BBC Radio 6 Music", platform: "Radio", followers: "2.5M+", contact: "6music@bbc.co.uk", type: "Radio" },
+    { name: "Punk Vibes Playlist", platform: "Spotify Playlist", followers: "50K", contact: "punkvibes@gmail.com", type: "Playlist" },
+  ],
+  "Indie Rock": [
+    { name: "Pitchfork", platform: "Magazine + Blog", followers: "2M+", contact: "pitchfork.com/reviews/submit", type: "Blog" },
+    { name: "The Line of Best Fit", platform: "Blog", followers: "120K+", contact: "music@thelineofbestfit.com", type: "Blog" },
+    { name: "Stereogum", platform: "Blog", followers: "500K+", contact: "tips@stereogum.com", type: "Blog" },
+    { name: "Under the Radar", platform: "Magazine + Blog", followers: "80K+", contact: "info@undertheradarmag.com", type: "Magazine" },
+    { name: "Substream Magazine", platform: "Magazine", followers: "60K+", contact: "music@substreammagazine.com", type: "Magazine" },
+    { name: "KEXP 90.3 FM", platform: "Radio", followers: "500K+", contact: "music@kexp.org", type: "Radio" },
+    { name: "BBC Radio 6 Music", platform: "Radio", followers: "2.5M+", contact: "6music@bbc.co.uk", type: "Radio" },
+    { name: "Indie Rock Playlist", platform: "Spotify Playlist", followers: "110K", contact: "indierockcurator@gmail.com", type: "Playlist" },
+    { name: "All Things Go", platform: "Blog + Events", followers: "50K+", contact: "info@allthingsgo.com", type: "Blog" },
+  ],
+  "Electronic": [
+    { name: "Resident Advisor", platform: "Magazine + Reviews", followers: "1M+", contact: "reviews@residentadvisor.net", type: "Magazine" },
+    { name: "Magnetic Magazine", platform: "Blog + Playlist", followers: "200K+", contact: "submit@magneticmag.com", type: "Blog" },
+    { name: "Mixmag", platform: "Magazine", followers: "800K+", contact: "music@mixmag.net", type: "Magazine" },
+    { name: "DJ Mag", platform: "Magazine", followers: "1.5M+", contact: "music@djmag.com", type: "Magazine" },
+    { name: "XLR8R", platform: "Blog + Magazine", followers: "200K+", contact: "editorial@xlr8r.com", type: "Magazine" },
+    { name: "Boxout.fm", platform: "Radio + Podcast", followers: "20K+", contact: "hello@boxout.fm", type: "Radio" },
+    { name: "NTS Radio", platform: "Radio", followers: "500K+", contact: "music@nts.live", type: "Radio" },
+    { name: "Electronic India", platform: "Spotify Playlist", followers: "9K", contact: "electronicindia@gmail.com", type: "Playlist" },
+    { name: "Rinse FM", platform: "Radio", followers: "200K+", contact: "music@rinse.fm", type: "Radio" },
+    { name: "Earmilk", platform: "Blog", followers: "150K+", contact: "submissions@earmilk.com", type: "Blog" },
+  ],
+  "Hip-Hop/Rap": [
+    { name: "Desi Hip Hop", platform: "Platform + Blog", followers: "100K+", contact: "info@desihiphop.com", type: "Blog" },
+    { name: "HipHopDX", platform: "Blog", followers: "2M+", contact: "news@hiphopdx.com", type: "Blog" },
+    { name: "The Source", platform: "Magazine + Blog", followers: "1M+", contact: "music@thesource.com", type: "Magazine" },
+    { name: "XXL Magazine", platform: "Magazine", followers: "3M+", contact: "music@xxlmag.com", type: "Magazine" },
+    { name: "Pigeons & Planes", platform: "Blog", followers: "400K+", contact: "submit@pigeonsandplanes.com", type: "Blog" },
+    { name: "2DopeBoyz", platform: "Blog", followers: "500K+", contact: "submissions@2dopeboyz.com", type: "Blog" },
+    { name: "Sway In The Morning (SiriusXM)", platform: "Radio", followers: "1M+", contact: "sway@siriusxm.com", type: "Radio" },
+    { name: "Hot 97", platform: "Radio", followers: "2M+", contact: "music@hot97.com", type: "Radio" },
+    { name: "Rap Caviar", platform: "Spotify Editorial", followers: "15M+", contact: "editorial@spotify.com", type: "Editorial" },
+    { name: "Fresh Finds Hip-Hop", platform: "Spotify Editorial", followers: "500K+", contact: "editorial@spotify.com", type: "Editorial" },
+  ],
+  "Jazz/Neo-Soul": [
+    { name: "DownBeat Magazine", platform: "Magazine", followers: "100K+", contact: "editor@downbeat.com", type: "Magazine" },
+    { name: "JazzTimes", platform: "Magazine + Blog", followers: "80K+", contact: "editor@jazztimes.com", type: "Magazine" },
+    { name: "Neo Soul Kitchen", platform: "Spotify Playlist", followers: "50K", contact: "nsk@gmail.com", type: "Playlist" },
+    { name: "All About Jazz", platform: "Blog + Reviews", followers: "200K+", contact: "editor@allaboutjazz.com", type: "Blog" },
+    { name: "Jazz FM", platform: "Radio", followers: "500K+", contact: "music@jazzfm.com", type: "Radio" },
+    { name: "WBGO Jazz Radio", platform: "Radio", followers: "150K+", contact: "music@wbgo.org", type: "Radio" },
+    { name: "Okayplayer", platform: "Blog", followers: "400K+", contact: "music@okayplayer.com", type: "Blog" },
+    { name: "Afropunk", platform: "Blog + Platform", followers: "1M+", contact: "music@afropunk.com", type: "Blog" },
+    { name: "Jazz & Neo Soul Playlist", platform: "Spotify Playlist", followers: "65K", contact: "jazzneosoul@gmail.com", type: "Playlist" },
+  ],
+  "Pop": [
+    { name: "PopDust", platform: "Blog", followers: "500K+", contact: "music@popdust.com", type: "Blog" },
+    { name: "Idolator", platform: "Blog", followers: "400K+", contact: "tips@idolator.com", type: "Blog" },
+    { name: "Billboard", platform: "Magazine + Blog", followers: "5M+", contact: "music@billboard.com", type: "Magazine" },
+    { name: "Ones To Watch", platform: "Blog + Playlist", followers: "200K+", contact: "info@onestowatch.com", type: "Blog" },
+    { name: "PopMatters", platform: "Blog + Reviews", followers: "300K+", contact: "music@popmatters.com", type: "Blog" },
+    { name: "Top 40 / Mainstream Radio (iHeart)", platform: "Radio", followers: "15M+", contact: "music@iheart.com", type: "Radio" },
+    { name: "Spotify New Music Friday", platform: "Spotify Editorial", followers: "5M+", contact: "editorial@spotify.com", type: "Editorial" },
+    { name: "Ones To Watch Playlist", platform: "Spotify Playlist", followers: "120K", contact: "playlist@onestowatch.com", type: "Playlist" },
+    { name: "Capital FM", platform: "Radio", followers: "8M+", contact: "music@capitalfm.com", type: "Radio" },
+  ],
+  "Metal": [
+    { name: "Metal Hammer", platform: "Magazine", followers: "400K+", contact: "metalhammer@futurenet.com", type: "Magazine" },
+    { name: "Kerrang!", platform: "Magazine", followers: "2M+", contact: "news@kerrang.com", type: "Magazine" },
+    { name: "Revolver Magazine", platform: "Magazine", followers: "300K+", contact: "info@revolvermag.com", type: "Magazine" },
+    { name: "Loudwire", platform: "Blog", followers: "2M+", contact: "tips@loudwire.com", type: "Blog" },
+    { name: "Metal Injection", platform: "Blog", followers: "500K+", contact: "news@metalinjection.net", type: "Blog" },
+    { name: "MetalSucks", platform: "Blog", followers: "400K+", contact: "tips@metalsucks.net", type: "Blog" },
+    { name: "Metal Storm India", platform: "Spotify Playlist", followers: "7K", contact: "metalstormindia@gmail.com", type: "Playlist" },
+    { name: "Bloodstock Radio", platform: "Radio + Podcast", followers: "22K+", contact: "radio@bloodstock.uk.com", type: "Radio" },
+    { name: "SiriusXM Octane", platform: "Radio", followers: "3M+", contact: "octane@siriusxm.com", type: "Radio" },
+    { name: "Metal Only Playlist", platform: "Spotify Playlist", followers: "85K", contact: "metalonlyplaylist@gmail.com", type: "Playlist" },
+  ],
+  "R&B/Soul": [
+    { name: "Soul Bounce", platform: "Blog", followers: "200K+", contact: "tips@soultracks.com", type: "Blog" },
+    { name: "Wax Poetic Magazine", platform: "Magazine", followers: "80K+", contact: "info@waxpoetic.com", type: "Magazine" },
+    { name: "Okayplayer", platform: "Blog", followers: "400K+", contact: "music@okayplayer.com", type: "Blog" },
+    { name: "Rated R&B", platform: "Blog", followers: "150K+", contact: "tips@ratedrnb.com", type: "Blog" },
+    { name: "Vibe Magazine", platform: "Magazine + Blog", followers: "1M+", contact: "music@vibe.com", type: "Magazine" },
+    { name: "SiriusXM Heart & Soul", platform: "Radio", followers: "1M+", contact: "heartandsoul@siriusxm.com", type: "Radio" },
+    { name: "Spotify R&B Only", platform: "Spotify Editorial", followers: "3M+", contact: "editorial@spotify.com", type: "Editorial" },
+    { name: "Urban Soul Playlist", platform: "Spotify Playlist", followers: "55K", contact: "urbansoulcurator@gmail.com", type: "Playlist" },
+  ],
+  "Country": [
+    { name: "Country Weekly", platform: "Magazine", followers: "200K+", contact: "editor@countryweekly.com", type: "Magazine" },
+    { name: "Saving Country Music", platform: "Blog", followers: "100K+", contact: "tips@savingcountrymusic.com", type: "Blog" },
+    { name: "The Boot", platform: "Blog", followers: "300K+", contact: "editor@theboot.com", type: "Blog" },
+    { name: "Taste of Country", platform: "Blog", followers: "400K+", contact: "tips@tasteofcountry.com", type: "Blog" },
+    { name: "CMT (Country Music Television)", platform: "TV + Blog", followers: "5M+", contact: "music@cmt.com", type: "Blog" },
+    { name: "Whiskey Riff", platform: "Blog", followers: "500K+", contact: "tips@whiskeyriff.com", type: "Blog" },
+    { name: "SiriusXM The Highway", platform: "Radio", followers: "2M+", contact: "thehighway@siriusxm.com", type: "Radio" },
+    { name: "Country Roads Playlist", platform: "Spotify Playlist", followers: "70K", contact: "countryroads.curator@gmail.com", type: "Playlist" },
+  ],
+  "Classical": [
+    { name: "Gramophone Magazine", platform: "Magazine", followers: "50K+", contact: "editor@gramophone.co.uk", type: "Magazine" },
+    { name: "BBC Music Magazine", platform: "Magazine", followers: "80K+", contact: "bbcmusicmag@immediate.co.uk", type: "Magazine" },
+    { name: "Musical America", platform: "Magazine + Blog", followers: "40K+", contact: "info@musicalamerica.com", type: "Magazine" },
+    { name: "Classical FM", platform: "Radio", followers: "5M+", contact: "music@classicfm.com", type: "Radio" },
+    { name: "WQXR (New York)", platform: "Radio", followers: "300K+", contact: "music@wqxr.org", type: "Radio" },
+    { name: "Bachtrack", platform: "Reviews + Blog", followers: "60K+", contact: "reviews@bachtrack.com", type: "Blog" },
+    { name: "Spotify Classical Essentials", platform: "Spotify Editorial", followers: "1M+", contact: "editorial@spotify.com", type: "Editorial" },
+    { name: "Classical Guitar Magazine", platform: "Magazine", followers: "30K+", contact: "editor@classicalguitarmagazine.com", type: "Magazine" },
+  ],
+  "Ambient": [
+    { name: "Igloo Magazine", platform: "Online Magazine", followers: "20K+", contact: "editor@igloomag.com", type: "Magazine" },
+    { name: "Fluid Radio", platform: "Blog + Radio", followers: "15K+", contact: "info@fluid.radio", type: "Radio" },
+    { name: "The Quietus", platform: "Blog", followers: "150K+", contact: "music@thequietus.com", type: "Blog" },
+    { name: "Drone Zone (SomaFM)", platform: "Radio", followers: "100K+", contact: "feedback@somafm.com", type: "Radio" },
+    { name: "NTS Radio", platform: "Radio", followers: "500K+", contact: "music@nts.live", type: "Radio" },
+    { name: "Sounds of the Dawn Playlist", platform: "Spotify Playlist", followers: "40K", contact: "ambientdawn@gmail.com", type: "Playlist" },
+    { name: "Ambient Blog", platform: "Blog", followers: "12K+", contact: "contact@ambientblog.net", type: "Blog" },
+    { name: "Pitchfork (Ambient section)", platform: "Blog", followers: "2M+", contact: "pitchfork.com/reviews/submit", type: "Blog" },
+  ],
+  "Reggae": [
+    { name: "Reggaeville", platform: "Blog + Magazine", followers: "200K+", contact: "contact@reggaeville.com", type: "Blog" },
+    { name: "United Reggae", platform: "Blog + Magazine", followers: "80K+", contact: "contact@unitedreggae.com", type: "Blog" },
+    { name: "Rootfire", platform: "Blog", followers: "60K+", contact: "info@rootfire.net", type: "Blog" },
+    { name: "Loud and Irie", platform: "Blog", followers: "30K+", contact: "info@loudandirie.com", type: "Blog" },
+    { name: "IRIE FM Jamaica", platform: "Radio", followers: "500K+", contact: "music@iriefm.net", type: "Radio" },
+    { name: "Reggae Radio (SiriusXM)", platform: "Radio", followers: "500K+", contact: "reggae@siriusxm.com", type: "Radio" },
+    { name: "Spotify Reggae Hits", platform: "Spotify Editorial", followers: "800K+", contact: "editorial@spotify.com", type: "Editorial" },
+    { name: "Dub Roots Playlist", platform: "Spotify Playlist", followers: "35K", contact: "dubrootscurator@gmail.com", type: "Playlist" },
+  ],
+  "Funk": [
+    { name: "Wax Poetic Magazine", platform: "Magazine", followers: "80K+", contact: "info@waxpoetic.com", type: "Magazine" },
+    { name: "Okayplayer", platform: "Blog", followers: "400K+", contact: "music@okayplayer.com", type: "Blog" },
+    { name: "Funk Freaks Playlist", platform: "Spotify Playlist", followers: "45K", contact: "funkfreaks@gmail.com", type: "Playlist" },
+    { name: "Afropunk", platform: "Blog + Platform", followers: "1M+", contact: "music@afropunk.com", type: "Blog" },
+    { name: "Funky Soul Radio", platform: "Radio", followers: "30K+", contact: "info@funkysoulradio.com", type: "Radio" },
+    { name: "The Funky Divison Playlist", platform: "Spotify Playlist", followers: "28K", contact: "funkydivision@gmail.com", type: "Playlist" },
+    { name: "SomaFM Groove Salad", platform: "Radio", followers: "200K+", contact: "feedback@somafm.com", type: "Radio" },
+    { name: "Bandcamp Daily (Funk)", platform: "Blog", followers: "500K+", contact: "daily@bandcamp.com", type: "Blog" },
+  ],
+  "Devotional/Spiritual": [
+    { name: "Gaana Bhajans", platform: "Streaming + Playlist", followers: "2M+", contact: "content@gaana.com", type: "Platform" },
+    { name: "Saregama Devotional", platform: "Blog + Playlist", followers: "500K+", contact: "content@saregama.com", type: "Blog" },
+    { name: "Radio Sai Global Harmony", platform: "Radio", followers: "1M+", contact: "radio@radiosai.org", type: "Radio" },
+    { name: "Aastha TV Music", platform: "TV + Blog", followers: "5M+", contact: "music@aasthatv.com", type: "Blog" },
+    { name: "Spotify Bhakti Playlist", platform: "Spotify Editorial", followers: "300K+", contact: "editorial@spotify.com", type: "Editorial" },
+    { name: "Spiritual Sounds India Playlist", platform: "Spotify Playlist", followers: "20K", contact: "spiritualsoundsindia@gmail.com", type: "Playlist" },
+    { name: "Bandcamp Devotional", platform: "Blog", followers: "500K+", contact: "daily@bandcamp.com", type: "Blog" },
+    { name: "Divine Chants Radio", platform: "Radio", followers: "80K+", contact: "info@divinechantsradio.com", type: "Radio" },
+  ],
+};
+
+const CURATOR_DB = Object.fromEntries(
+  Object.entries(CURATOR_DB_RAW).map(([genre, list]) => [genre, [HHV_ENTRY, ...list]])
+);
+
+function generatePitch({ artistName, trackName, genre, mood, releaseDate, shortBio }) {
+  return `Subject: New Release Submission – "${trackName}" by ${artistName}
+
+Hi there,
+
+I'm ${artistName}, an independent artist working in the ${genre} space. I'm reaching out to share my latest track "${trackName}", releasing on ${releaseDate || "[release date]"}.
+
+${shortBio || `${artistName} creates music that blends raw emotion with atmospheric production.`}
+
+"${trackName}" is a ${mood || "cinematic and emotionally resonant"} track that I think fits well with your playlist's aesthetic. It would be an honour to have it considered for a feature.
+
+You can stream/preview here: [Insert Spotify/SoundCloud link]
+
+I'm happy to provide any additional info. Thanks so much for your time and for the incredible work you do championing independent music.
+
+Warm regards,
+${artistName}`;
+}
+
+function generateWeeklyPlan(trackName) {
+  return [
+    { week: "Week 1 (4 weeks before release)", tasks: [
+      "Upload track to SubmitHub & Groover for paid curator submissions",
+      "Research 20–30 independent playlist curators in your genre",
+      "Draft personalized pitches for top 10 targets",
+      "Pitch to music blogs (Homegrown, Wild City, etc.)",
+      "Announce pre-save campaign on Instagram Stories",
+    ]},
+    { week: "Week 2 (3 weeks before release)", tasks: [
+      "Send first round of outreach emails to curators",
+      "Submit to Spotify for Artists editorial pitching (at least 7 days before release)",
+      "Reach out to 5 podcast hosts in your genre",
+      "Create release countdown content for Instagram/Reels",
+      "Send press release to 3 music journalists",
+    ]},
+    { week: "Week 3 (2 weeks before release)", tasks: [
+      "Follow up on unanswered pitches from Week 2",
+      "Send second round of outreach to new curators",
+      "Share a 15-sec teaser clip on Reels/Shorts",
+      "Engage with playlists that have featured similar artists",
+      "DM fan accounts in your niche to build early buzz",
+    ]},
+    { week: "Week 4 (Release week)", tasks: [
+      `Release day: Share "${trackName || "your track"}" everywhere`,
+      "Post release announcement with Spotify link on all platforms",
+      "Thank all curators who featured the track",
+      "Run a Story poll: 'What's your fav lyric?'",
+      "Post a behind-the-scenes Reel about making the track",
+    ]},
+    { week: "Week 5–6 (Post-release)", tasks: [
+      "Analyze Spotify for Artists: saves, streams, playlist adds",
+      "Re-pitch to curators who didn't respond initially",
+      "Submit to monthly playlist roundups and blog features",
+      "Repurpose track for Instagram Reels with trending audio",
+      "Start planning next release while momentum is up",
+    ]},
+  ];
+}
+
+const accent = "#00c9c8";
+const accentGrad = "linear-gradient(135deg, #00c9c8, #00aaff)";
+const pinkGrad = "linear-gradient(135deg, #f7567c, #ff8c5a)";
+const bg = "#0b0e1a";
+const surface = "#111827";
+const surface2 = "#1a2235";
+const border = "#1e3a4a";
+const textColor = "#e8eaf6";
+const muted = "#6b7fa3";
+
+function App() {
+  const [tab, setTab] = useState("setup");
+  const [form, setForm] = useState({ artistName: "", trackName: "", genre: "Indian Indie", mood: "", releaseDate: "", shortBio: "" });
+  const [pitch, setPitch] = useState("");
+  const [plan, setPlan] = useState([]);
+  const [outreach, setOutreach] = useState([]);
+  const [copied, setCopied] = useState(false);
+
+  function handleChange(e) { setForm(f => ({ ...f, [e.target.name]: e.target.value })); }
+
+  function handleGeneratePitch() { setPitch(generatePitch(form)); setTab("pitch"); }
+
+  function handleGeneratePlan() { setPlan(generateWeeklyPlan(form.trackName)); setTab("plan"); }
+
+  function handleLoadCurators() {
+    const list = (CURATOR_DB[form.genre] || []).map(c => ({ ...c, status: "Not Started", notes: "" }));
+    setOutreach(list); setTab("outreach");
+  }
+
+  function copyPitch() {
+    navigator.clipboard.writeText(pitch).catch(() => {
+      const ta = document.createElement("textarea"); ta.value = pitch;
+      document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
+    });
+    setCopied(true); setTimeout(() => setCopied(false), 2000);
+  }
+
+  const tabs = [{ id: "setup", label: "Setup" }, { id: "pitch", label: "Pitch Generator" }, { id: "plan", label: "Promo Plan" }, { id: "outreach", label: "Outreach Tracker" }];
+
+  return (
+    <div style={{ minHeight: "100vh", background: bg }}>
+      {/* Header */}
+      <div style={{ background: "linear-gradient(160deg, #0d1f2d 0%, #0b0e1a 60%)", borderBottom: `1px solid ${border}`, padding: "24px 32px 0" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+          <div style={{ width: 38, height: 38, borderRadius: 10, background: accentGrad, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0, boxShadow: "0 0 16px rgba(0,201,200,0.35)" }}>♪</div>
+          <div>
+            <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: 17, letterSpacing: "-0.3px", background: accentGrad, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Spotify Promo Workflow</div>
+            <div style={{ fontSize: 11, letterSpacing: "0.4px" }}>
+              by{" "}
+              <a href="https://www.instagram.com/harmonyhypeverdict/" target="_blank" rel="noopener noreferrer" style={{ background: accentGrad, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 700, textDecoration: "none" }}>Harmony Hype Verdict</a>
+              {" & "}
+              <a href="https://www.instagram.com/maluscomas/" target="_blank" rel="noopener noreferrer" style={{ background: pinkGrad, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 700, textDecoration: "none" }}>Maluscomas</a>
+            </div>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 0, overflowX: "auto" }}>
+          {tabs.map(t => (
+            <button key={t.id} onClick={() => setTab(t.id)} style={{
+              background: "none", border: "none", cursor: "pointer", padding: "10px 20px",
+              fontSize: 13, fontWeight: 600, whiteSpace: "nowrap",
+              color: tab === t.id ? accent : muted,
+              borderBottom: tab === t.id ? `2px solid ${accent}` : "2px solid transparent",              transition: "all 0.2s", letterSpacing: "0.3px"
+            }}>{t.label}</button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ padding: "28px 32px", maxWidth: 760, margin: "0 auto" }}>
+
+        {/* SETUP */}
+        {tab === "setup" && (
+          <div>
+            <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>Track Details</h2>
+            <p style={{ color: muted, fontSize: 14, marginBottom: 24 }}>Fill this in once — it powers your pitch, promo plan, and outreach tracker.</p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              {[
+                { name: "artistName", label: "Artist Name", placeholder: "e.g. The Midnight Circus" },
+                { name: "trackName", label: "Track Name", placeholder: "e.g. Neon Jungle" },
+                { name: "releaseDate", label: "Release Date", placeholder: "e.g. May 15, 2026" },
+                { name: "mood", label: "Mood / Vibe", placeholder: "e.g. dreamy, lo-fi, high energy" },
+              ].map(f => (
+                <div key={f.name}>
+                  <label style={{ display: "block", fontSize: 11, color: muted, marginBottom: 6, fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" }}>{f.label}</label>
+                  <input name={f.name} value={form[f.name]} onChange={handleChange} placeholder={f.placeholder} style={{ width: "100%", background: surface2, border: `1px solid ${border}`, borderRadius: 8, padding: "10px 14px", color: textColor, fontSize: 14, outline: "none" }} />
+                </div>
+              ))}
+            </div>
+            <div style={{ marginTop: 16 }}>
+              <label style={{ display: "block", fontSize: 11, color: muted, marginBottom: 6, fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" }}>Genre</label>
+              <select name="genre" value={form.genre} onChange={handleChange} style={{ background: surface2, border: `1px solid ${border}`, borderRadius: 8, padding: "10px 14px", color: textColor, fontSize: 14, outline: "none", width: "100%" }}>
+                {GENRES.map(g => <option key={g}>{g}</option>)}
+              </select>
+            </div>
+            <div style={{ marginTop: 16 }}>
+              <label style={{ display: "block", fontSize: 11, color: muted, marginBottom: 6, fontWeight: 700, letterSpacing: "0.8px", textTransform: "uppercase" }}>Short Bio (1–2 sentences)</label>
+              <textarea name="shortBio" value={form.shortBio} onChange={handleChange} placeholder="e.g. We're a Mumbai-based indie duo blending Hindustani classical with bedroom pop." rows={3} style={{ width: "100%", background: surface2, border: `1px solid ${border}`, borderRadius: 8, padding: "10px 14px", color: textColor, fontSize: 14, outline: "none", resize: "vertical" }} />
+            </div>
+            <div style={{ display: "flex", gap: 12, marginTop: 28, flexWrap: "wrap" }}>
+              {[
+                { label: "✦ Generate Pitch", action: handleGeneratePitch, grad: accentGrad },
+                { label: "📅 Build Promo Plan", action: handleGeneratePlan, grad: null },
+                { label: "📋 Load Curators", action: handleLoadCurators, grad: null },
+              ].map(b => (
+                <button key={b.label} onClick={b.action} style={{
+                  background: b.grad ? b.grad : surface2,
+                  border: b.grad ? "none" : `1px solid ${border}`,
+                  borderRadius: 8, padding: "10px 18px",
+                  color: b.grad ? "#fff" : textColor,
+                  fontSize: 13, fontWeight: 700, cursor: "pointer", letterSpacing: "0.3px",
+                  boxShadow: b.grad ? "0 0 14px rgba(0,201,200,0.25)" : "none"
+                }}>{b.label}</button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* PITCH */}
+        {tab === "pitch" && (
+          <div>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+              <div>
+                <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>Curator Pitch</h2>
+                <p style={{ color: muted, fontSize: 14 }}>Personalized email pitch for playlist curators & blogs</p>
+              </div>
+              <div style={{ display: "flex", gap: 10 }}>
+                <button onClick={handleGeneratePitch} style={{ background: surface2, border: `1px solid ${border}`, borderRadius: 8, padding: "8px 14px", color: textColor, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>↺ Regenerate</button>
+              </div>
+            </div>
+            {pitch && (
+              <div style={{ background: surface, border: `1px solid ${border}`, borderRadius: 12, padding: 24, position: "relative" }}>
+                <pre style={{ fontFamily: "inherit", whiteSpace: "pre-wrap", fontSize: 14, lineHeight: 1.7, color: textColor, margin: 0, paddingRight: 60 }}>{pitch}</pre>
+                <button onClick={copyPitch} style={{ position: "absolute", top: 16, right: 16, background: copied ? accentGrad : surface2, border: `1px solid ${border}`, borderRadius: 6, padding: "6px 12px", color: textColor, fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                  {copied ? "✓ Copied!" : "Copy"}
+                </button>
+              </div>
+            )}
+            {!pitch && (
+              <div style={{ background: surface, borderRadius: 12, padding: 40, textAlign: "center", color: muted, border: `1px dashed ${border}` }}>
+                <div style={{ fontSize: 32, marginBottom: 12 }}>✉</div>
+                <p>Go to the Setup tab, fill in your track details, then generate a pitch.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* PLAN */}
+        {tab === "plan" && (
+          <div>
+            <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>5-Week Promo Plan</h2>
+            <p style={{ color: muted, fontSize: 14, marginBottom: 24 }}>
+              {form.trackName ? `Release: "${form.trackName}"` : "Fill in track details in Setup first"}
+              {form.releaseDate ? ` · ${form.releaseDate}` : ""}
+            </p>
+            {plan.length === 0 ? (
+              <div style={{ background: surface, borderRadius: 12, padding: 40, textAlign: "center", color: muted, border: `1px dashed ${border}` }}>
+                <div style={{ fontSize: 32, marginBottom: 12 }}>📅</div>
+                <p>Go to Setup and click "Build Promo Plan".</p>
+              </div>
+            ) : plan.map((w, i) => (
+              <div key={i} style={{ background: surface, border: `1px solid ${border}`, borderRadius: 12, padding: 20, marginBottom: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: accentGrad, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff", flexShrink: 0 }}>{i + 1}</div>
+                  <div style={{ fontWeight: 700, fontSize: 15 }}>{w.week}</div>
+                </div>
+                {w.tasks.map((task, j) => (
+                  <div key={j} style={{ display: "flex", alignItems: "flex-start", gap: 10, fontSize: 14, color: "#c0c0d8", marginBottom: 8 }}>
+                    <span style={{ color: accent, marginTop: 2, flexShrink: 0 }}>→</span>                    {task}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* OUTREACH */}
+        {tab === "outreach" && (
+          <div>
+            <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 6 }}>Outreach Tracker</h2>
+            <p style={{ color: muted, fontSize: 14, marginBottom: 24 }}>{form.genre} curators · {outreach.length} contacts loaded</p>
+            {outreach.length === 0 ? (
+              <div style={{ background: surface, borderRadius: 12, padding: 40, textAlign: "center", color: muted, border: `1px dashed ${border}` }}>
+                <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
+                <p>Go to Setup and click "Load Curators" to populate this tracker.</p>
+              </div>
+            ) : (
+              <div>
+                {outreach.map((c, i) => (
+                  <div key={i} style={{ background: c.hhv ? "linear-gradient(135deg, rgba(0,201,200,0.08), rgba(0,170,255,0.05))" : surface, border: c.hhv ? `1px solid rgba(0,201,200,0.35)` : `1px solid ${border}`, borderRadius: 12, padding: 18, marginBottom: 12 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10 }}>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: 15, display: "flex", alignItems: "center", gap: 8 }}>
+                          {c.name}
+                        </div>
+                        <div style={{ fontSize: 12, color: muted, marginTop: 4 }}>{c.platform} · {c.followers} followers</div>
+                        <div style={{ display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap" }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.5px", padding: "2px 8px", borderRadius: 4, background:
+                            c.type === "Magazine" ? "rgba(124,107,201,0.2)" :
+                            c.type === "Radio" ? "rgba(43,143,163,0.2)" :
+                            c.type === "Editorial" ? "rgba(30,201,200,0.2)" :
+                            c.type === "Platform" ? "rgba(212,160,48,0.2)" :
+                            c.type === "Blog" ? "rgba(58,168,107,0.2)" :
+                            "rgba(255,255,255,0.08)",
+                            color:
+                            c.type === "Magazine" ? "#a99de0" :
+                            c.type === "Radio" ? "#6ec6d8" :
+                            c.type === "Editorial" ? "#00c9c8" :
+                            c.type === "Platform" ? "#e8c06a" :
+                            c.type === "Blog" ? "#6dd4a0" :
+                            "#aaa",
+                            border: "1px solid currentColor"
+                          }}>{c.type}</span>
+                          <span style={{ fontSize: 11, color: "#5a8a9a" }}>{c.contact}</span>
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <div style={{ width: 10, height: 10, borderRadius: "50%", background: STAGE_COLORS[c.status], flexShrink: 0 }} />
+                        <select value={c.status} onChange={e => setOutreach(o => o.map((item, idx) => idx === i ? { ...item, status: e.target.value } : item))} style={{ background: surface2, border: `1px solid ${border}`, borderRadius: 6, padding: "5px 10px", color: textColor, fontSize: 12, outline: "none" }}>
+                          {STAGES.map(s => <option key={s}>{s}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <input value={c.notes} onChange={e => setOutreach(o => o.map((item, idx) => idx === i ? { ...item, notes: e.target.value } : item))} placeholder="Notes (e.g. responded positively, follow up Friday)" style={{ marginTop: 12, width: "100%", background: surface2, border: `1px solid ${border}`, borderRadius: 6, padding: "8px 12px", color: textColor, fontSize: 13, outline: "none" }} />
+                  </div>
+                ))}
+                <div style={{ background: surface2, borderRadius: 12, padding: 16, marginTop: 8, display: "flex", gap: 16, flexWrap: "wrap" }}>
+                  {Object.entries(STAGE_COLORS).map(([stage, color]) => {
+                    const count = outreach.filter(o => o.status === stage).length;
+                    if (!count) return null;
+                    return <div key={stage} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: color }} />
+                      <span style={{ color: muted }}>{stage}:</span>
+                      <span style={{ fontWeight: 700 }}>{count}</span>
+                    </div>;
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+      </div>
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+      {/* Footer */}
+      <div style={{ textAlign: "center", padding: "32px 32px 40px", borderTop: `1px solid ${border}`, marginTop: 16 }}>
+        <div style={{ fontSize: 12, color: muted, letterSpacing: "0.5px", marginBottom: 8 }}>
+          Created by{" "}
+          <a href="https://www.instagram.com/maluscomas/" target="_blank" rel="noopener noreferrer" style={{ background: pinkGrad, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 700, textDecoration: "none" }}>Maluscomas</a>
+          {" · "}
+          <a href="https://www.instagram.com/harmonyhypeverdict/" target="_blank" rel="noopener noreferrer" style={{ background: accentGrad, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontWeight: 700, textDecoration: "none" }}>Harmony Hype Verdict</a>
+        </div>
+        <div style={{ fontSize: 12, color: muted, marginBottom: 20 }}>
+          Follow us on Instagram for more music content &amp; consider supporting via Buy Me a Coffee ☕
+        </div>
+        <a href="https://buymeacoffee.com/harmonyhypeverdict" target="_blank" rel="noopener noreferrer" style={{
+          display: "inline-flex", alignItems: "center", gap: 8,
+          background: "linear-gradient(135deg, #FFDD00, #FFC300)",
+          color: "#000", fontWeight: 700, fontSize: 13,
+          padding: "10px 20px", borderRadius: 10,
+          textDecoration: "none", letterSpacing: "0.3px",
+          boxShadow: "0 4px 18px rgba(255,210,0,0.25)",
+        }}
+        onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 24px rgba(255,210,0,0.4)"; }}
+        onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 18px rgba(255,210,0,0.25)"; }}
+        >
+          ☕ Buy me a coffee
+        </a>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
